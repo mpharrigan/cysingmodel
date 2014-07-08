@@ -10,6 +10,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.pyplot import Normalize
 
+import pyqtgraph as pg
+
 # Constants
 NDIM = 2
 BOXL = 100
@@ -41,8 +43,10 @@ def generate_hmask(y):
     # Third speed
     y //= 3
 
-    # Move back and forth. Period = 40
-    y = ((y + 30) % 60) - 30
+    # Move back and forth
+    y %= 60
+    if y > 30:
+        y = 60 - y
 
     hmask[_block(20 + y, 50)] = -2 * H
     hmask[_block(80 - y, 50)] = -2 * H
@@ -122,6 +126,8 @@ def mc_loop(n_steps, cells, stride=1000, equilib=False):
 def plot(cells_t):
     """Save images over time of the 2D cell array."""
     xx, yy = np.meshgrid(np.arange(BOXL), np.arange(BOXL))
+
+    #TODO: Use faster library
 
     for i, cells in enumerate(cells_t):
         plt.scatter(xx, yy, c=cells, norm=Normalize(-1, 1), s=10, linewidths=0)
