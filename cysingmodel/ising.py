@@ -15,7 +15,7 @@ import pyqtgraph as pg
 # Constants
 NDIM = 2
 BOXL = 100
-J = 10
+J = 20
 H = 10
 BETA = 1 / 30
 
@@ -48,8 +48,8 @@ def generate_hmask(y):
     if y > 30:
         y = 60 - y
 
-    hmask[_block(20 + y, 50)] = -2 * H
-    hmask[_block(80 - y, 50)] = -2 * H
+    hmask[_block(20 + y, 50)] = -3 * H
+    hmask[_block(80 - y, 50)] = -3 * H
 
     return hmask
 
