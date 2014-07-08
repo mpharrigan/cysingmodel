@@ -12,6 +12,7 @@ from matplotlib.pyplot import Normalize
 
 # Constants
 NDIM = 2
+BOXL = 100
 J = 10
 H = 10
 BETA = 1 / 30
@@ -25,21 +26,42 @@ NEIGHB = np.asarray([
 ])
 
 
-def generate_hmask(boxl):
+def generate_hmask(y):
     """Generate single-body field, H.
 
     This will be positive for the whole space except for two blocks
     centered at (20, 50) and (80, 50)
+
+    :param y: Move towards each other by y
+
+    They touch at 40, 60 which is 20 steps.
     """
+    hmask = H * np.ones((BOXL, BOXL), dtype=int)
 
-    # TODO: Just make boxl a constant
-    assert boxl == 100
-    hmask = H * np.ones((boxl, boxl), dtype=int)
+    # Third speed
+    y //= 3
 
-    hmask[_block(20, 50)] = -2 * H
-    hmask[_block(80, 50)] = -2 * H
+    # Move back and forth. Period = 40
+    y = ((y + 30) % 60) - 30
+
+    hmask[_block(20 + y, 50)] = -2 * H
+    hmask[_block(80 - y, 50)] = -2 * H
 
     return hmask
+
+
+def generate_cells():
+    """Generate initial configuration.
+
+    This will be positive for the whole space except for two blocks
+    centered at (20, 50) and (80, 50) in accordance with hmask
+    """
+    cells = np.ones((BOXL, BOXL), dtype='i1')
+
+    cells[_block(20, 50)] = -1
+    cells[_block(80, 50)] = -1
+
+    return cells
 
 
 def _block(x, y, size=20):
@@ -48,33 +70,27 @@ def _block(x, y, size=20):
     return slice(x - s2, x + s2), slice(y - s2, y + s2)
 
 
-def mc_loop(n_steps, boxl, init_cells=None):
+def mc_loop(n_steps, cells, stride=1000, equilib=False):
     """Perform Monte Carlo simulation."""
 
     # Generate H
-    hmask = generate_hmask(boxl)
-
-    # Optionally generate initial condition
-    if init_cells is None:
-        cells = np.ones((boxl, boxl), dtype='i1')
-        cells[_block(20, 50)] = -1
-        cells[_block(80, 50)] = -1
-    else:
-        cells = init_cells
+    hmask = generate_hmask(0)
 
     # Save configurations
-    # TODO: Only save every N ~ 100 frames
-    cells_t = np.ones((n_steps, boxl, boxl), dtype='i1')
+    cells_t = np.ones((n_steps // stride, BOXL, BOXL), dtype='i1')
     cells_t[0, :, :] = cells
+
+    # Magnetization
+    m = np.zeros(n_steps)
 
     for step in range(n_steps):
 
         # Pick a cell
-        pick_i = np.random.random_integers(0, boxl - 1, NDIM)
+        pick_i = np.random.random_integers(0, BOXL - 1, NDIM)
         s_pick = cells[pick_i[0], pick_i[1]]
 
         # Find neighbors
-        neighbs = np.remainder(pick_i + NEIGHB, boxl)
+        neighbs = np.remainder(pick_i + NEIGHB, BOXL)
         cell_neighbs = cells[neighbs[:, 0], neighbs[:, 1]]
 
         # Calculate the old energy
@@ -92,18 +108,22 @@ def mc_loop(n_steps, boxl, init_cells=None):
             cells[pick_i[0], pick_i[1]] *= -1
 
         # Save configuration
-        # TODO: Only save some
-        cells_t[step, :, :] = cells
+        if step % stride == 0:
+            cells_t[step // stride, :, :] = cells
+            if not equilib:
+                hmask = generate_hmask(step // stride)
 
-    return cells_t
+        # Compute total magnetization
+        m[step] = np.sum(cells)
+
+    return cells_t, m
 
 
 def plot(cells_t):
     """Save images over time of the 2D cell array."""
-    boxl = cells_t.shape[1]
-    xx, yy = np.meshgrid(np.arange(boxl), np.arange(boxl))
+    xx, yy = np.meshgrid(np.arange(BOXL), np.arange(BOXL))
 
-    for i, cells in enumerate(cells_t[::1000, ...]):
+    for i, cells in enumerate(cells_t):
         plt.scatter(xx, yy, c=cells, norm=Normalize(-1, 1), s=10, linewidths=0)
         plt.title(str(i))
         figfn = '/home/harrigan/implement/wetmsm/ising/mov/ising-{:05d}.png'
@@ -111,21 +131,26 @@ def plot(cells_t):
         plt.clf()
 
 
-def plot_m(cells_t):
+def plot_m(m):
     """Plot the total magnetization, M, over time."""
-    # TODO: Compute this in the main loop at every step?
-    m = np.sum(cells_t, axis=(1, 2))
     plt.plot(m)
     plt.xlabel('Time')
     plt.ylabel('Magnetization')
     plt.show()
 
 
-print('Running Equilibration')
-CELLST = mc_loop(100000, 100)
-print('Running Production')
-CELLST = mc_loop(100000, 100, init_cells=CELLST[-1, ...])
-print('Making Movie')
-plot(CELLST)
-print('Plotting Magnetization')
-plot_m(CELLST)
+def main():
+    print('Running Equilibration')
+    cells_eq, _ = mc_loop(100000, generate_cells(), equilib=True)
+
+    print('Running Production')
+    cells_t, m = mc_loop(400000, cells_eq[-1, ...])
+
+    print('Making Movie')
+    plot(cells_t)
+
+    print('Plotting Magnetization')
+    plot_m(m)
+
+
+main()
