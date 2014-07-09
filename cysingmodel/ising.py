@@ -36,9 +36,10 @@ def plot_movie(cells_t):
     QtGui.QApplication.instance().exec_()
 
 
-def plot_m(m):
+def plot_m(m, ys):
     """Plot the total magnetization, M, over time."""
-    plt.plot(m)
+    plt.plot(m, label='m')
+    plt.plot(ys, label='y')
     plt.xlabel('Time')
     plt.ylabel('Magnetization')
     plt.show()
@@ -56,8 +57,7 @@ def main():
     print('Running Production')
     cells_t, m, ys = cy.mc_loop(400000, cells_eq[-1, ...], J=J, H=H, TEMP=TEMP)
 
-    print('Plotting Magnetization')
-    #plot_m(m)
+    plot_m(m, ys)
 
     plot_movie(cells_t)
 
