@@ -26,27 +26,33 @@ ctypedef np.int8_t DTYPEI1_T
 ctypedef np.float DTYPED_T
 
 
+cdef int get_y(int step):
+    """Give a sinusoidal function of step"""
+
+    # Third speed
+    cdef int y = step // 3
+
+    # Move back and forth
+    y = np.floor(np.sin(TWOPI * y / 60))
+
+    return y
+
+
 cdef np.ndarray[DTYPEI_T, ndim=2] generate_hmask(int y, int H):
     """Generate single-body field, H.
 
     This will be positive for the whole space except for two blocks
     centered at (20, 50) and (80, 50)
 
-    :param y: Move towards each other by y in a sinusoidal way
+    :param y: Move towards each other by y (computed elsewhere)
 
     """
     cdef np.ndarray[DTYPEI_T, ndim=2] hmask = H * np.ones((BOXL, BOXL), dtype=DTYPEI)
 
-    # Third speed
-    y //= 3
-
-    # Move back and forth
-    y = np.floor(np.sin(TWOPI * y / 60))
-
     hmask[_block(20 + y, 50)] = -3 * H
     hmask[_block(80 - y, 50)] = -3 * H
 
-    return hmask, y
+    return hmask
 
 
 def generate_cells():
@@ -85,7 +91,7 @@ def mc_loop(int n_steps, np.ndarray[DTYPEI1_T, ndim=2] cells,
     # Block Movement
     cdef np.ndarray[DTYPEI_T, ndim=1] ys = np.zeros(n_steps, dtype=DTYPEI)
     cdef np.ndarray[DTYPEI_T, ndim=2] hmask
-    hmask, ys[0] = generate_hmask(0, H=H)
+    hmask = generate_hmask(0, H=H)
 
     # Variable definitions
     cdef int s_pick
@@ -95,6 +101,7 @@ def mc_loop(int n_steps, np.ndarray[DTYPEI1_T, ndim=2] cells,
     cdef int e_old, e_new
     cdef float prob
     cdef int step
+    cdef int ssi
 
     # Make all the random integers
     cdef np.ndarray[DTYPEI_T, ndim=1] randints = np.random.random_integers(0, BOXL - 1, NDIM * n_steps)
@@ -144,9 +151,11 @@ def mc_loop(int n_steps, np.ndarray[DTYPEI1_T, ndim=2] cells,
 
         # Save configuration
         if step % stride == 0:
-            cells_t[step // stride, :, :] = cells
+            ssi = step // stride
+            cells_t[ssi, :, :] = cells
             if not equilib:
-                hmask, ys[step // stride] = generate_hmask(step // stride, H=H)
+                ys[ssi] = get_y(ssi)
+                hmask = generate_hmask(ys[ssi], H=H)
 
     return cells_t, m
 
