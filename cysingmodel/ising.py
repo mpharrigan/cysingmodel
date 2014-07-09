@@ -39,11 +39,12 @@ def plot_movie(cells_t):
 def plot_m(m, ys):
     """Plot the total magnetization, M, over time."""
     plt.plot(m, label='m')
-    plt.plot(ys, label='y')
     plt.xlabel('Time')
     plt.ylabel('Magnetization')
     plt.show()
 
+    plt.plot(ys, label='y')
+    plt.show()
 
 def main():
 

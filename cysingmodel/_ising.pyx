@@ -33,7 +33,7 @@ cdef np.ndarray[DTYPEI_T, ndim=1] get_y(np.ndarray[DTYPEI_T, ndim=1] step):
     cdef np.ndarray[DTYPEI_T, ndim=1] y = step // 3
 
     # Move back and forth
-    cdef np.ndarray[DTYPED_T, ndim=1] y_double = np.sin(TWOPI * y / 60)
+    cdef np.ndarray[DTYPED_T, ndim=1] y_double = 20 * np.sin(TWOPI * y / 60)
     y = np.asarray(<np.ndarray[DTYPEI_T, ndim=1]>y_double, dtype=DTYPEI)
 
     return y
