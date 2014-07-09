@@ -23,7 +23,7 @@ DTYPED = np.double
 
 ctypedef np.int_t DTYPEI_T
 ctypedef np.int8_t DTYPEI1_T
-ctypedef np.float DTYPED_T
+ctypedef np.double_t DTYPED_T
 
 
 cdef np.ndarray[DTYPEI_T, ndim=1] get_y(np.ndarray[DTYPEI_T, ndim=1] step):
@@ -33,7 +33,8 @@ cdef np.ndarray[DTYPEI_T, ndim=1] get_y(np.ndarray[DTYPEI_T, ndim=1] step):
     cdef np.ndarray[DTYPEI_T, ndim=1] y = step // 3
 
     # Move back and forth
-    y = np.floor(np.sin(TWOPI * y / 60))
+    cdef np.ndarray[DTYPED_T, ndim=1] y_double = np.sin(TWOPI * y / 60)
+    y = np.asarray(<np.ndarray[DTYPEI_T, ndim=1]>y_double, dtype=DTYPEI)
 
     return y
 
