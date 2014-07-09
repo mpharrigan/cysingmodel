@@ -1,0 +1,10 @@
+7319168 function calls (7312107 primitive calls) in 42.799 seconds
+
+Ordered by: internal time
+
+ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+2   20.886   10.443   42.014   21.007 ising.py:80(mc_loop)
+1502037   15.399    0.000   15.399    0.000 {method 'reduce' of 'numpy.ufunc' objects}
+1500000    1.836    0.000   19.703    0.000 fromnumeric.py:1621(sum)
+1500000    1.737    0.000   17.128    0.000 _methods.py:23(_sum)
+500000    1.301    0.000    1.301    0.000 {method 'random_integers' of 'mtrand.RandomState' objects}
