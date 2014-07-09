@@ -53,7 +53,7 @@ cdef np.ndarray[DTYPEI_T, ndim=2] generate_hmask(int y, int H):
     return hmask
 
 
-cdef np.ndarray[DTYPEI1_T, ndim=2] generate_cells():
+def generate_cells():
     """Generate initial configuration.
 
     This will be positive for the whole space except for two blocks
