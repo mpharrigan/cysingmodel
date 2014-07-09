@@ -33,7 +33,7 @@ cdef np.ndarray[DTYPEI_T, ndim=1] get_y(np.ndarray[DTYPEI_T, ndim=1] step):
     cdef np.ndarray[DTYPEI_T, ndim=1] y = step // 3
 
     # Move back and forth
-    cdef np.ndarray[DTYPED_T, ndim=1] y_double = 25 * np.sin(TWOPI * y / 60)
+    cdef np.ndarray[DTYPED_T, ndim=1] y_double = 20 * np.sin(TWOPI * y / 60)
     y = np.asarray(<np.ndarray[DTYPEI_T, ndim=1]>y_double, dtype=DTYPEI)
 
     return y
@@ -63,8 +63,8 @@ def generate_cells():
     """
     cdef np.ndarray[DTYPEI1_T, ndim=2] cells = np.ones((BOXL, BOXL), dtype=DTYPEI1)
 
-    cells[_block(20, 50)] = -1
-    cells[_block(80, 50)] = -1
+    cells[_block(35, 50)] = -1
+    cells[_block(85, 50)] = -1
 
     return cells
 
