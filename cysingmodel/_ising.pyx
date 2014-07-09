@@ -10,23 +10,31 @@ import numpy as np
 cimport numpy as np
 cimport cython
 
+from cpython cimport bool
+
 # Constants
-NDIM = 2
-BOXL = 100
-J = 20
-H = 10
-BETA = 1 / 30
+cdef int NDIM = 2
+cdef int BOXL = 100
+cdef int J = 20
+cdef int H = 10
+cdef float BETA = 1 / 30
+
+DTYPEI1 = np.int8
+DTYPEI = np.int
+
+ctypedef np.int_t DTYPEI_T
+ctypedef np.int8_t DTYPEI1_T
 
 # Neighbor offsets
-NEIGHB = np.asarray([
+cdef np.ndarray NEIGHB = np.asarray([
     [-1, 0],
     [0, -1],
     [1, 0],
     [0, 1]
-])
+], dtype=DTYPEI)
 
 
-def generate_hmask(y):
+cdef np.ndarray[DTYPEI_T, ndim=2] generate_hmask(int y):
     """Generate single-body field, H.
 
     This will be positive for the whole space except for two blocks
@@ -36,7 +44,7 @@ def generate_hmask(y):
 
     They touch at 40, 60 which is 20 steps.
     """
-    hmask = H * np.ones((BOXL, BOXL), dtype=int)
+    cdef np.ndarray[DTYPEI_T, ndim=2] hmask = H * np.ones((BOXL, BOXL), dtype=DTYPEI)
 
     #TODO: Use like a sine function here or something
 
@@ -54,13 +62,13 @@ def generate_hmask(y):
     return hmask
 
 
-def generate_cells():
+cdef np.ndarray[DTYPEI1_T, ndim=2] generate_cells():
     """Generate initial configuration.
 
     This will be positive for the whole space except for two blocks
     centered at (20, 50) and (80, 50) in accordance with hmask
     """
-    cells = np.ones((BOXL, BOXL), dtype='i1')
+    cdef np.ndarray[DTYPEI1_T, ndim=2] cells = np.ones((BOXL, BOXL), dtype=DTYPEI1)
 
     cells[_block(20, 50)] = -1
     cells[_block(80, 50)] = -1
@@ -68,24 +76,33 @@ def generate_cells():
     return cells
 
 
-def _block(x, y, size=20):
+def _block(int x, int y, int size=20):
     """Helper function to give an array slice for a block around a point."""
-    s2 = size // 2
+    cdef int s2 = size // 2
     return slice(x - s2, x + s2), slice(y - s2, y + s2)
 
 
-def mc_loop(n_steps, cells, stride=1000, equilib=False):
+def mc_loop(int n_steps, np.ndarray[DTYPEI1_T, ndim=2] cells, int stride=1000, bool equilib=False):
     """Perform Monte Carlo simulation."""
 
     # Generate H
-    hmask = generate_hmask(0)
+    cdef np.ndarray[DTYPEI_T, ndim=2] hmask = generate_hmask(0)
 
     # Save configurations
-    cells_t = np.ones((n_steps // stride, BOXL, BOXL), dtype='i1')
+    cdef np.ndarray[DTYPEI1_T, ndim=3] cells_t = np.ones((n_steps // stride, BOXL, BOXL), dtype=DTYPEI1)
     cells_t[0, :, :] = cells
 
     # Magnetization
-    m = np.zeros(n_steps)
+    cdef np.ndarray[DTYPEI_T, ndim=1] m = np.zeros(n_steps, dtype=DTYPEI)
+
+    cdef int s_pick
+    cdef np.ndarray[DTYPEI_T, ndim=1] pick_i
+    cdef np.ndarray[DTYPEI_T, ndim=2] neighbs
+    cdef np.ndarray[DTYPEI1_T, ndim=1] cell_neighbs
+
+    cdef int e_old, e_new
+    cdef float prob
+    cdef int step
 
     for step in range(n_steps):
 
