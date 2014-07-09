@@ -11,6 +11,7 @@ from matplotlib import pyplot as plt
 from matplotlib.pyplot import Normalize
 
 import pyqtgraph as pg
+from pyqtgraph.Qt import QtCore, QtGui
 
 # Constants
 NDIM = 2
@@ -39,6 +40,8 @@ def generate_hmask(y):
     They touch at 40, 60 which is 20 steps.
     """
     hmask = H * np.ones((BOXL, BOXL), dtype=int)
+
+    #TODO: Use like a sine function here or something
 
     # Third speed
     y //= 3
@@ -137,6 +140,12 @@ def plot(cells_t):
         plt.clf()
 
 
+def plot_movie(cells_t):
+    """Use pyqtgraph to make a movie quickly."""
+    pg.image(cells_t)
+    QtGui.QApplication.instance().exec_()
+
+
 def plot_m(m):
     """Plot the total magnetization, M, over time."""
     plt.plot(m)
@@ -152,11 +161,12 @@ def main():
     print('Running Production')
     cells_t, m = mc_loop(400000, cells_eq[-1, ...])
 
-    print('Making Movie')
-    plot(cells_t)
-
     print('Plotting Magnetization')
-    plot_m(m)
+    #plot_m(m)
+
+    print('Plotting Movie')
+    plot_movie()
 
 
+app = QtGui.QApplication([])
 main()
