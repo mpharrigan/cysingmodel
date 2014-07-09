@@ -7,11 +7,8 @@ of oppositely magnetized spins.
 __author__ = 'Matthew Harrigan <matthew.p.harrigan@gmail.com>'
 
 import numpy as np
-from matplotlib import pyplot as plt
-from matplotlib.pyplot import Normalize
-
-import pyqtgraph as pg
-from pyqtgraph.Qt import QtCore, QtGui
+cimport numpy as np
+cimport cython
 
 # Constants
 NDIM = 2
@@ -126,34 +123,6 @@ def mc_loop(n_steps, cells, stride=1000, equilib=False):
     return cells_t, m
 
 
-def plot(cells_t):
-    """Save images over time of the 2D cell array."""
-    xx, yy = np.meshgrid(np.arange(BOXL), np.arange(BOXL))
-
-    #TODO: Use faster library
-
-    for i, cells in enumerate(cells_t):
-        plt.scatter(xx, yy, c=cells, norm=Normalize(-1, 1), s=10, linewidths=0)
-        plt.title(str(i))
-        figfn = '/home/harrigan/implement/wetmsm/ising/mov/ising-{:05d}.png'
-        plt.savefig(figfn.format(i))
-        plt.clf()
-
-
-def plot_movie(cells_t):
-    """Use pyqtgraph to make a movie quickly."""
-    pg.image(cells_t)
-    QtGui.QApplication.instance().exec_()
-
-
-def plot_m(m):
-    """Plot the total magnetization, M, over time."""
-    plt.plot(m)
-    plt.xlabel('Time')
-    plt.ylabel('Magnetization')
-    plt.show()
-
-
 def main():
     print('Running Equilibration')
     cells_eq, _ = mc_loop(100000, generate_cells(), equilib=True)
@@ -161,10 +130,6 @@ def main():
     print('Running Production')
     cells_t, m = mc_loop(400000, cells_eq[-1, ...])
 
-    print('Plotting Magnetization')
-    #plot_m(m)
+if __name__ == '__main__':
+    main()
 
-
-
-app = QtGui.QApplication([])
-main()
