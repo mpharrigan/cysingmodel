@@ -26,11 +26,11 @@ ctypedef np.int8_t DTYPEI1_T
 ctypedef np.float DTYPED_T
 
 
-cdef int get_y(int step):
+cdef np.ndarray[DTYPEI_T, ndim=1] get_y(np.ndarray[DTYPEI_T, ndim=1] step):
     """Give a sinusoidal function of step"""
 
     # Third speed
-    cdef int y = step // 3
+    cdef np.ndarray[DTYPEI_T, ndim=1] y = step // 3
 
     # Move back and forth
     y = np.floor(np.sin(TWOPI * y / 60))
@@ -89,9 +89,9 @@ def mc_loop(int n_steps, np.ndarray[DTYPEI1_T, ndim=2] cells,
     m[0] = np.sum(cells)
 
     # Block Movement
-    cdef np.ndarray[DTYPEI_T, ndim=1] ys = np.zeros(n_steps, dtype=DTYPEI)
+    cdef np.ndarray[DTYPEI_T, ndim=1] ys = get_y(np.arange(n_steps // stride, dtype=DTYPEI))
     cdef np.ndarray[DTYPEI_T, ndim=2] hmask
-    hmask = generate_hmask(0, H=H)
+    hmask = generate_hmask(ys[0], H=H)
 
     # Variable definitions
     cdef int s_pick
@@ -154,10 +154,9 @@ def mc_loop(int n_steps, np.ndarray[DTYPEI1_T, ndim=2] cells,
             ssi = step // stride
             cells_t[ssi, :, :] = cells
             if not equilib:
-                ys[ssi] = get_y(ssi)
                 hmask = generate_hmask(ys[ssi], H=H)
 
-    return cells_t, m
+    return cells_t, m, ys
 
 
 def main():

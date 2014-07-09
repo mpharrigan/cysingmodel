@@ -51,10 +51,10 @@ def main():
     TEMP = 30
 
     print('Running Equilibration')
-    cells_eq, _ = cy.mc_loop(100000, cy.generate_cells(), equilib=True, J=J, H=H, TEMP=TEMP)
+    cells_eq, _, _ = cy.mc_loop(100000, cy.generate_cells(), equilib=True, J=J, H=H, TEMP=TEMP)
 
     print('Running Production')
-    cells_t, m = cy.mc_loop(400000, cells_eq[-1, ...], J=J, H=H, TEMP=TEMP)
+    cells_t, m, ys = cy.mc_loop(400000, cells_eq[-1, ...], J=J, H=H, TEMP=TEMP)
 
     print('Plotting Magnetization')
     #plot_m(m)
