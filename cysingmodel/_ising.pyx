@@ -15,6 +15,7 @@ from cpython cimport bool
 # Constants
 cdef int NDIM = 2
 cdef int BOXL = 100
+cdef float TWOPI = np.pi * 2
 
 DTYPEI1 = np.int8
 DTYPEI = np.int
@@ -31,26 +32,21 @@ cdef np.ndarray[DTYPEI_T, ndim=2] generate_hmask(int y, int H):
     This will be positive for the whole space except for two blocks
     centered at (20, 50) and (80, 50)
 
-    :param y: Move towards each other by y
+    :param y: Move towards each other by y in a sinusoidal way
 
-    They touch at 40, 60 which is 20 steps.
     """
     cdef np.ndarray[DTYPEI_T, ndim=2] hmask = H * np.ones((BOXL, BOXL), dtype=DTYPEI)
-
-    #TODO: Use like a sine function here or something
 
     # Third speed
     y //= 3
 
     # Move back and forth
-    y %= 60
-    if y > 30:
-        y = 60 - y
+    y = np.floor(np.sin(TWOPI * y / 60))
 
     hmask[_block(20 + y, 50)] = -3 * H
     hmask[_block(80 - y, 50)] = -3 * H
 
-    return hmask
+    return hmask, y
 
 
 def generate_cells():
@@ -78,9 +74,6 @@ def mc_loop(int n_steps, np.ndarray[DTYPEI1_T, ndim=2] cells,
         int J=20, int H=10, int TEMP=30):
     """Perform Monte Carlo simulation."""
 
-    # Generate H
-    cdef np.ndarray[DTYPEI_T, ndim=2] hmask = generate_hmask(0, H=H)
-
     # Save configurations
     cdef np.ndarray[DTYPEI1_T, ndim=3] cells_t = np.ones((n_steps // stride, BOXL, BOXL), dtype=DTYPEI1)
     cells_t[0, :, :] = cells
@@ -89,6 +82,12 @@ def mc_loop(int n_steps, np.ndarray[DTYPEI1_T, ndim=2] cells,
     cdef np.ndarray[DTYPEI_T, ndim=1] m = np.zeros(n_steps + 1, dtype=DTYPEI)
     m[0] = np.sum(cells)
 
+    # Block Movement
+    cdef np.ndarray[DTYPEI_T, ndim=1] ys = np.zeros(n_steps, dtype=DTYPEI)
+    cdef np.ndarray[DTYPEI_T, ndim=2] hmask
+    hmask, ys[0] = generate_hmask(0, H=H)
+
+    # Variable definitions
     cdef int s_pick
     cdef int picki1, picki2
     cdef np.ndarray[DTYPEI1_T, ndim=1] cell_neighbs
@@ -147,7 +146,7 @@ def mc_loop(int n_steps, np.ndarray[DTYPEI1_T, ndim=2] cells,
         if step % stride == 0:
             cells_t[step // stride, :, :] = cells
             if not equilib:
-                hmask = generate_hmask(step // stride, H=H)
+                hmask, ys[step // stride] = generate_hmask(step // stride, H=H)
 
     return cells_t, m
 
