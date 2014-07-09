@@ -14,7 +14,7 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
 
 import cysingmodel as cy
-BOXL = 100
+BOXL = 120
 
 def plot(cells_t):
     """Save images over time of the 2D cell array.

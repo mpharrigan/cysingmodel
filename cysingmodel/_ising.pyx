@@ -14,7 +14,7 @@ from cpython cimport bool
 
 # Constants
 cdef int NDIM = 2
-cdef int BOXL = 100
+cdef int BOXL = 120
 cdef float TWOPI = np.pi * 2
 
 DTYPEI1 = np.int8
@@ -33,7 +33,7 @@ cdef np.ndarray[DTYPEI_T, ndim=1] get_y(np.ndarray[DTYPEI_T, ndim=1] step):
     cdef np.ndarray[DTYPEI_T, ndim=1] y = step // 3
 
     # Move back and forth
-    cdef np.ndarray[DTYPED_T, ndim=1] y_double = 20 * np.sin(TWOPI * y / 60)
+    cdef np.ndarray[DTYPED_T, ndim=1] y_double = 25 * np.sin(TWOPI * y / 60)
     y = np.asarray(<np.ndarray[DTYPEI_T, ndim=1]>y_double, dtype=DTYPEI)
 
     return y
@@ -43,15 +43,14 @@ cdef np.ndarray[DTYPEI_T, ndim=2] generate_hmask(int y, int H):
     """Generate single-body field, H.
 
     This will be positive for the whole space except for two blocks
-    centered at (20, 50) and (80, 50)
 
     :param y: Move towards each other by y (computed elsewhere)
 
     """
     cdef np.ndarray[DTYPEI_T, ndim=2] hmask = H * np.ones((BOXL, BOXL), dtype=DTYPEI)
 
-    hmask[_block(20 + y, 50)] = -3 * H
-    hmask[_block(80 - y, 50)] = -3 * H
+    hmask[_block(35 + y, 50)] = -3 * H
+    hmask[_block(85 - y, 50)] = -3 * H
 
     return hmask
 
