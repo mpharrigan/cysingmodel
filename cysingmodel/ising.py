@@ -40,6 +40,9 @@ class IsingModel:
         self.m = np.ndarray((0,))
         self.y = np.ndarray((0,))
 
+        self._m_centered = np.ndarray((0,))
+        self._y_centered = np.ndarray((0,))
+
     def run(self, n_eq=100000, n_prod=1000000):
         """Run equilibration then production run.
 
@@ -63,6 +66,22 @@ class IsingModel:
                                                   H=self.h, TEMP=self.temp,
                                                   stride=self.stride)
 
+    @property
+    def m_centered(self):
+        """M offset and rescaled."""
+        if self._m_centered.shape[0] <= 0:
+            m = self.m[::self.stride] - np.mean(self.m[::self.stride])
+            self._m_centered = -m / (1.0 * np.max(m))
+        return self._m_centered
+
+    @property
+    def y_centered(self):
+        """Y offset and rescaled."""
+        if self._y_centered.shape[0] <= 0:
+            y = self.y - np.mean(self.y)
+            self._y_centered = y / (1.0 * np.max(y))
+        return self._y_centered
+
     def plot_movie(self):
         """Use pyqtgraph to make a movie quickly."""
         pg.image(self.cells_t)
@@ -77,15 +96,8 @@ class IsingModel:
         Scale and offset the two variables so they can be seen on the
         same Y-axis
         """
-
-        m = self.m[::self.stride] - np.mean(self.m[::self.stride])
-        y = self.y - np.mean(self.y)
-
-        m = -m / (1.0 * np.max(m))
-        y = y / (1.0 * np.max(y))
-
-        plt.plot(m, label='M')
-        plt.plot(y, label='Y')
+        plt.plot(self.m_centered, label='M')
+        plt.plot(self.y_centered, label='Y')
         plt.xlabel('Time')
         plt.ylabel('(Arbitrary units)')
         plt.legend(loc='best')
