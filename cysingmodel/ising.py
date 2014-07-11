@@ -20,6 +20,18 @@ import cysingmodel as cy
 BOXL = 120
 
 
+def cosine_yfunc(step_vec):
+    """Give a sinusoidal function of step."""
+
+    # Third speed
+    y = step_vec // 3
+
+    # Move back and forth
+    y = np.asarray(-14 * np.cos(2 * np.pi * y / 60), dtype=int)
+
+    return y
+
+
 class IsingModel:
     """A 2D Ising model with a dynamic single-body term, H
 
@@ -27,10 +39,12 @@ class IsingModel:
     :param h: Single-body strength, H
     :param temp: Temperature for monte-carlo criterion
     :param stride: How many MC steps to do between saving results
+    :param y_func: A function that takes a vector of step indices and returns an
+        array of position offsets for the blocks over time
 
     """
 
-    def __init__(self, j, h, temp, stride=2000):
+    def __init__(self, j, h, temp, stride=2000, y_func=cosine_yfunc):
         self.j = j
         self.h = h
         self.temp = temp
@@ -42,6 +56,8 @@ class IsingModel:
 
         self._m_centered = np.ndarray((0,))
         self._y_centered = np.ndarray((0,))
+
+        self.y_func = y_func
 
     def run(self, n_eq=100000, n_prod=1000000):
         """Run equilibration then production run.
@@ -57,7 +73,8 @@ class IsingModel:
         # Run equilibration (or not)
         if n_eq > 0:
             print('Running Equilibration')
-            cell_eq, _, _ = cy.mc_loop(n_eq, cy.generate_cells(), equilib=True,
+            eq_ys = self.y_func(np.zeros(n_eq // self.stride, dtype=int))
+            cell_eq, _, _ = cy.mc_loop(n_eq, cy.generate_cells(), ys=eq_ys,
                                        J=self.j, H=self.h, TEMP=self.temp,
                                        stride=self.stride)
             prod_init = cell_eq[-1, ...]
@@ -66,9 +83,15 @@ class IsingModel:
 
         # Run production
         print('Running Production')
-        self.cells_t, self.m, self.y = cy.mc_loop(n_prod, prod_init, J=self.j,
-                                                  H=self.h, TEMP=self.temp,
-                                                  stride=self.stride)
+        prod_ys = self.y_func(np.arange(n_prod // self.stride, dtype=int))
+        cells_t, m, y = cy.mc_loop(n_prod, prod_init, J=self.j, H=self.h,
+                                   TEMP=self.temp,
+                                   stride=self.stride,
+                                   ys=prod_ys)
+
+        self.cells_t = cells_t
+        self.m = m
+        self.y = y
 
     @property
     def m_centered(self):

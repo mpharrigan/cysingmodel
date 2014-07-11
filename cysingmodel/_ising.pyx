@@ -10,8 +10,6 @@ import numpy as np
 cimport numpy as np
 cimport cython
 
-from cpython cimport bool
-
 # Constants
 cdef int NDIM = 2
 cdef int BOXL = 120
@@ -24,19 +22,6 @@ DTYPED = np.double
 ctypedef np.int_t DTYPEI_T
 ctypedef np.int8_t DTYPEI1_T
 ctypedef np.double_t DTYPED_T
-
-
-cdef np.ndarray[DTYPEI_T, ndim=1] get_y(np.ndarray[DTYPEI_T, ndim=1] step):
-    """Give a sinusoidal function of step"""
-
-    # Third speed
-    cdef np.ndarray[DTYPEI_T, ndim=1] y = step // 3
-
-    # Move back and forth
-    cdef np.ndarray[DTYPED_T, ndim=1] y_double = -20 * np.cos(TWOPI * y / 60)
-    y = np.asarray(<np.ndarray[DTYPEI_T, ndim=1]>y_double, dtype=DTYPEI)
-
-    return y
 
 
 cdef np.ndarray[DTYPEI_T, ndim=2] generate_hmask(int y, int H):
@@ -76,9 +61,15 @@ def _block(int x, int y, int size=20):
 
 
 def mc_loop(int n_steps, np.ndarray[DTYPEI1_T, ndim=2] cells,
-        int stride=1000, bool equilib=False,
+        np.ndarray[DTYPEI_T, ndim=1] ys,
+        int stride=1000,
         int J=20, int H=10, int TEMP=30):
-    """Perform Monte Carlo simulation."""
+    """Perform Monte Carlo simulation.
+    
+    :param cells: Initial configuration of cells
+    :param ys: Array of values to set the movement of the blocks
+    
+    """
 
     # Save configurations
     cdef np.ndarray[DTYPEI1_T, ndim=3] cells_t = np.ones((n_steps // stride, BOXL, BOXL), dtype=DTYPEI1)
@@ -89,7 +80,6 @@ def mc_loop(int n_steps, np.ndarray[DTYPEI1_T, ndim=2] cells,
     m[0] = np.sum(cells)
 
     # Block Movement
-    cdef np.ndarray[DTYPEI_T, ndim=1] ys = get_y(np.arange(n_steps // stride, dtype=DTYPEI))
     cdef np.ndarray[DTYPEI_T, ndim=2] hmask
     hmask = generate_hmask(ys[0], H=H)
 
@@ -153,19 +143,8 @@ def mc_loop(int n_steps, np.ndarray[DTYPEI1_T, ndim=2] cells,
         if step % stride == 0:
             ssi = step // stride
             cells_t[ssi, :, :] = cells
-            if not equilib:
-                hmask = generate_hmask(ys[ssi], H=H)
+            hmask = generate_hmask(ys[ssi], H=H)
 
     return cells_t, m, ys
 
-
-def main():
-    print('Running Equilibration')
-    cells_eq, _ = mc_loop(100000, generate_cells(), equilib=True)
-
-    print('Running Production')
-    cells_t, m = mc_loop(400000, cells_eq[-1, ...])
-
-if __name__ == '__main__':
-    main()
 
