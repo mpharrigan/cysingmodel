@@ -50,6 +50,10 @@ class IsingModel:
         :param n_prod: Number of steps for production run
         """
 
+        # Invalidate these
+        self._m_centered = np.ndarray((0,))
+        self._y_centered = np.ndarray((0,))
+
         # Run equilibration (or not)
         if n_eq > 0:
             print('Running Equilibration')
