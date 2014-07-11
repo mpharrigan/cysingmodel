@@ -70,7 +70,7 @@ class IsingModel:
     def m_centered(self):
         """M offset and rescaled."""
         if self._m_centered.shape[0] <= 0:
-            m = self.m[::self.stride] - np.mean(self.m[::self.stride])
+            m = self.m[1::self.stride] - np.mean(self.m[1::self.stride])
             self._m_centered = -m / (1.0 * np.max(m))
         return self._m_centered
 
