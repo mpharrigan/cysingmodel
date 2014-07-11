@@ -73,6 +73,6 @@ def main():
 
     plot_movie(cells_t)
 
-
-app = QtGui.QApplication([])
-main()
+if __name__ == "__main__":
+    app = QtGui.QApplication([])
+    main()
