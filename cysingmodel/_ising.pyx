@@ -63,8 +63,8 @@ def generate_cells():
     """
     cdef np.ndarray[DTYPEI1_T, ndim=2] cells = np.ones((BOXL, BOXL), dtype=DTYPEI1)
 
-    cells[_block(35, 50)] = -1
-    cells[_block(85, 50)] = -1
+    cells[_block(35 - 20, 50)] = -1
+    cells[_block(85 + 20, 50)] = -1
 
     return cells
 
