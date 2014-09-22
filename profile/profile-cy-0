@@ -1,9 +1,0 @@
-6055887 function calls (6053751 primitive calls) in 42.313 seconds
-
-Ordered by: internal time
-
-ncalls  tottime  percall  cumtime  percall filename:lineno(function)
-1   22.493   22.493   42.147   42.147 {_ising.main}
-1500000   15.570    0.000   15.570    0.000 {method 'reduce' of 'numpy.ufunc' objects}
-1500000    1.878    0.000   19.645    0.000 fromnumeric.py:1621(sum)
-

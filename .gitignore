@@ -1,2 +1,3 @@
 build
 *.swp
+.ipynb_checkpoints/
